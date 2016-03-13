@@ -5,7 +5,9 @@ module.exports = function(grunt) {
       "flappy": {
         src: [
           "src/draw.js",
+          "src/animation.js",
           "src/layer.js",
+          "src/defaults.js",
           "src/scene.js",
           "src/flappy.js"
         ],
@@ -50,7 +52,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask("test", ["run:test"]);
   grunt.registerTask("watch:dev", ["watch"]);
-  grunt.registerTask("build", ["concat", "uglify:js", "run:test"]);
+  grunt.registerTask("build", ["concat", "uglify:js"]);
   grunt.registerTask("build:dev", ["concat"]);
   grunt.registerTask("default", ["concat"]);
 

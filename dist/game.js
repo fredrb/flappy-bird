@@ -12,11 +12,21 @@ var Draw = {
 
 }
 
+var Animation = function(options, action) {
+  this.options = options;
+  this.action = action;
+}
+
+Animation.prototype.run = function() {
+  this.action(this.options);
+}
+
 var Layer = function(id, level, context) {
   this.id      = id;
   this.context = context;
   this.level   = level;
   this.drawQueue = [];
+  this.animationQueue = [];
 }
 
 Layer.prototype.append = function(fn) {
@@ -24,58 +34,82 @@ Layer.prototype.append = function(fn) {
   return this;
 }
 
+Layer.prototype.appendAnimation = function(animation) {
+  this.animationQueue.push(animation);
+  return this;
+}
+
 Layer.prototype.draw = function() {
   this.drawQueue.forEach(function(fn) {
     fn();
   });
+
+  this.animationQueue.forEach(function(anim) {
+    anim.run();
+  });
 }
 
-// Load Scene from canvas ID
+var Defaults = {
+  Animation : {
+
+    background_horizontal_parallax : function(context, src, speed) {
+      return new Animation({x: 0, y: 0, speed: speed, context: context}, function(options) {
+        if (options.x < -(options.context.canvas.clientWidth)) {
+          options.x = 0;
+        } else {
+          options.x = (options.x - options.speed);
+        }
+
+        Draw.image(options.x, options.y, src, options.context);
+        Draw.image((options.context.canvas.clientWidth + options.x), options.y, src, options.context);
+      });
+    }
+
+  }
+}
+
+
 var Scene = function(canvasID) {
   this.canvas = document.getElementById(canvasID);
   this.context = canvas.getContext("2d");
 
   this.layers = [];
-};
+}
 
-Scene.prototype.setBackground = function(src, animation) {
-  this.bgX = 0;
-  this.bgY = 0;
-
+Scene.prototype.background = function(src, options) {
   this.addLayer('background', 0);
-  Draw.image(this.bgX, this.bgY, src, this.context);
-
-  if (animation) {
-    this.addAnimatedObject(src, 'background', function() {
-      if (this.bgX < -(this.context.canvas.clientWidth)) {
-        this.bgX = 0;
-      } else {
-        this.bgX = (this.bgX - animation.speed);
-      }
-
-      Draw.image(this.bgX, this.bgY, src, this.context);
-      Draw.image((this.context.canvas.clientWidth + this.bgX), this.bgY, src, this.context);
-    }.bind(this));
+  if (options.horizontalScroll) {
+    options.layer = 'background';
+    this._setAnimatedBackground(src, options);
+  } else {
+    this._setBackground(src);
   }
+}
 
-  // if (animation) {
-  //   setInterval(function() {
-  //
-  //   }.bind(this) , 15);
-  // }
-};
+Scene.prototype._setAnimatedBackground = function(src, options) {
+  this._addImageAnimation(src, options.layer,
+    Defaults.Animation.background_horizontal_parallax(this.context, src, options.speed));
+}
 
-Scene.prototype.addAnimatedObject = function(src, layer, animation) {
+Scene.prototype._setBackground = function(src) {
+  this._addImage(src, 'background', 0, 0);
+}
+
+Scene.prototype.addImage = function(src, options) {
+  if (options.animation) {
+    this._addImageAnimation(src, options.layer, options.animation);
+  } else {
+    this._addImage(src, options.layer, options.x, options.y);
+  }
+}
+
+Scene.prototype._addImageAnimation = function(src, layer, animation) {
   _.find(this.layers, function(l) { return l.id == layer })
-    .append(animation)
+    .appendAnimation(animation)
     .draw();
-};
+}
 
-Scene.prototype.initialize = function(options) {
-  setInterval(this._loop_.bind(this), options.refreshRate || 15);
-};
-
-Scene.prototype.addObject = function(src, layer, x, y) {
+Scene.prototype._addImage = function(src, layer, x, y) {
   _.find(this.layers, function(l) { return l.id == layer })
   .append(function() {
     Draw.image(x, y, src, this.context);
@@ -87,6 +121,10 @@ Scene.prototype.addLayer = function(id, level) {
   this.layers.push(new Layer(id, level, this.context));
 };
 
+Scene.prototype.initialize = function(options) {
+  setInterval(this._loop_.bind(this), options.refreshRate || 15);
+};
+
 Scene.prototype._loop_ = function() {
   var layerStack = _.sortBy(this.layers, function(l) { return l.level; });
   _.each(layerStack, function(layer) {
@@ -94,23 +132,19 @@ Scene.prototype._loop_ = function() {
   }.bind(this));
 };
 
-
-// Scene.prototype._loop_ = function() {
-//   var layerStack = _.min(this.layers, function(l) { return l.level; });
-//   _.each(layerStack, function(layer) {
-//     layer.draw();
-//   }.bind(this));
-// };
-
 var scene = new Scene('canvas');
 
-scene.setBackground('assets/background.png', {
+scene.background('assets/background.png', {
   horizontalScroll : true,
   speed : 2
 });
 
 scene.addLayer('hero', 1);
-scene.addObject('assets/flappy01.png', 'hero', 20, 200);
+scene.addImage('assets/flappy01.png', {
+  'layer' : 'hero',
+  'x' : 10,
+  'y' : 200
+});
 
 scene.initialize({
   refreshRate : 15

@@ -3,6 +3,7 @@ var Layer = function(id, level, context) {
   this.context = context;
   this.level   = level;
   this.drawQueue = [];
+  this.animationQueue = [];
 }
 
 Layer.prototype.append = function(fn) {
@@ -10,8 +11,17 @@ Layer.prototype.append = function(fn) {
   return this;
 }
 
+Layer.prototype.appendAnimation = function(animation) {
+  this.animationQueue.push(animation);
+  return this;
+}
+
 Layer.prototype.draw = function() {
   this.drawQueue.forEach(function(fn) {
     fn();
+  });
+
+  this.animationQueue.forEach(function(anim) {
+    anim.run();
   });
 }
