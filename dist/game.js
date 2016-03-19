@@ -63,6 +63,15 @@ var Defaults = {
         Draw.image(options.x, options.y, src, options.context);
         Draw.image((options.context.canvas.clientWidth + options.x), options.y, src, options.context);
       });
+    },
+
+    move_left : function(context, src, opt) {
+      return new Animation({x : opt.x, y :  opt.y, speed : opt.speed}, function(options) {
+        if (!(opt.x > context.canvas.clientWidth)) {
+          options.x += options.speed;
+          Draw.image(options.x, options.y, src, context);
+        }
+      });
     }
 
   }
@@ -136,10 +145,20 @@ var scene = new Scene('canvas');
 
 scene.background('assets/background.png', {
   horizontalScroll : true,
-  speed : 2
+  speed : 1
 });
 
 scene.addLayer('hero', 1);
+
+// scene.addImage('assets/flappy01.png', {
+//   'layer': 'hero',
+//   'animation' : Defaults.Animation.move_left(scene.context, 'assets/flappy01.png', {
+//     'x' : 10,
+//     'y' : 200,
+//     'speed' : 0.5
+//   })
+// })
+
 scene.addImage('assets/flappy01.png', {
   'layer' : 'hero',
   'x' : 10,
@@ -147,5 +166,5 @@ scene.addImage('assets/flappy01.png', {
 });
 
 scene.initialize({
-  refreshRate : 15
+  refreshRate : 10
 });

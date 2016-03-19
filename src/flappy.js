@@ -2,10 +2,20 @@ var scene = new Scene('canvas');
 
 scene.background('assets/background.png', {
   horizontalScroll : true,
-  speed : 2
+  speed : 1
 });
 
 scene.addLayer('hero', 1);
+
+// scene.addImage('assets/flappy01.png', {
+//   'layer': 'hero',
+//   'animation' : Defaults.Animation.move_left(scene.context, 'assets/flappy01.png', {
+//     'x' : 10,
+//     'y' : 200,
+//     'speed' : 0.5
+//   })
+// })
+
 scene.addImage('assets/flappy01.png', {
   'layer' : 'hero',
   'x' : 10,
@@ -13,5 +23,5 @@ scene.addImage('assets/flappy01.png', {
 });
 
 scene.initialize({
-  refreshRate : 15
+  refreshRate : 10
 });
